@@ -2,7 +2,6 @@ package main
 
 import (
 	"context"
-	"fmt"
 	"hoanbui29/reverse_proxy/internal/config"
 	"io"
 	"net/http"
@@ -36,7 +35,6 @@ func forward(r *http.Request, host string, timeout int) (*http.Response, error) 
 
 func (s serverGateway) proxy() http.Handler {
 	factoryMap := make(map[string]IResourceFactory)
-	fmt.Println(factoryMap)
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		resource := s.getResource(r)
 		if resource == nil {
@@ -51,8 +49,6 @@ func (s serverGateway) proxy() http.Handler {
 
 		var factory IResourceFactory
 		var err error
-
-		fmt.Println(factoryMap)
 
 		if v, ok := factoryMap[resource.Prefix]; !ok {
 			factory, err = GetResourceFactory(resource)
