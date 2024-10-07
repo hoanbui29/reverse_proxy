@@ -1,26 +1,28 @@
 package main
 
 import (
+	"fmt"
+	"hoanbui29/reverse_proxy/internal/config"
 	"hoanbui29/reverse_proxy/internal/logger"
 	"net/http"
 	"os"
 )
 
-type server struct {
+type serverGateway struct {
 	logger *logger.Logger
+	config config.Config
 }
 
 func main() {
-	s := server{
+	s := serverGateway{
 		logger: logger.New(os.Stdout, logger.LevelDebug),
 	}
-	err := s.serve()
-	if err != nil {
-		s.logger.Fatal("server failed to start", map[string]string{"error": err.Error()})
-	}
+	cfg, err := config.Load()
+	s.handleFatal(err, "failed to load config")
+	s.config = cfg
+	s.handleFatal(s.serve(), "failed to start server")
 }
 
-func (s server) serve() error {
-	mux := routes()
-	return http.ListenAndServe(":8080", mux)
+func (s serverGateway) serve() error {
+	return http.ListenAndServe(fmt.Sprintf("%s:%d", s.config.Server.Host, s.config.Server.Port), s.proxy())
 }

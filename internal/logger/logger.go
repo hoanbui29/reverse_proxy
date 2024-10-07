@@ -3,6 +3,7 @@ package logger
 import (
 	"encoding/json"
 	"io"
+	"os"
 	"runtime/debug"
 	"sync"
 	"time"
@@ -75,6 +76,7 @@ func (l *Logger) Error(message string, properties map[string]string) {
 
 func (l *Logger) Fatal(message string, properties map[string]string) {
 	l.print(LevelFatal, message, properties)
+	os.Exit(1)
 }
 
 func (l *Logger) print(level Level, message string, properties map[string]string) (int, error) {
