@@ -8,37 +8,39 @@ import (
 
 var ErrStrategyNotSupported = errors.New("strategy not supported")
 
-type IResourceFactory interface {
-	Next() string
+type roundRobinPool struct {
+	servers []*server
+	index   int
+	mu      *sync.Mutex
 }
 
-func GetResourceFactory(r *config.Resource) (IResourceFactory, error) {
+func getServerPool(r *config.Resource) (serverPool, error) {
 	switch r.Strategy {
 	case config.StrategyRoundRobin:
-		return &RoundRobinResource{
-			hosts: r.Destinations,
-			index: 0,
-			mu:    &sync.Mutex{},
+		return &roundRobinPool{
+			servers: []*server{},
+			index:   0,
+			mu:      &sync.Mutex{},
 		}, nil
 	default:
 		return nil, ErrStrategyNotSupported
 	}
 }
 
-type RoundRobinResource struct {
-	hosts []string
-	index int
-	mu    *sync.Mutex
-}
-
-func (r *RoundRobinResource) Next() string {
+func (r *roundRobinPool) Next() *server {
 	// Implement the logic to return the next host in the list
 	r.mu.Lock()
 	defer r.mu.Unlock()
 
-	result := r.hosts[r.index]
+	srv := r.servers[r.index]
 
-	r.index = (r.index + 1) % len(r.hosts)
+	r.index = (r.index + 1) % len(r.servers)
 
-	return result
+	return srv
+}
+
+func (r *roundRobinPool) AddServer(s *server) {
+	r.mu.Lock()
+	defer r.mu.Unlock()
+	r.servers = append(r.servers, s)
 }

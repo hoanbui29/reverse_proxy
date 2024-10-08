@@ -22,7 +22,6 @@ type ConfigServer struct {
 }
 
 type Resource struct {
-	Name         string   `mapstructure:"name"`
 	Timeout      int      `mapstructure:"timeout"`
 	Prefix       string   `mapstructure:"prefix"`
 	Strategy     Strategy `mapstructure:"strategy"`

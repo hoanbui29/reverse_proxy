@@ -2,22 +2,10 @@ package main
 
 import (
 	"context"
-	"hoanbui29/reverse_proxy/internal/config"
 	"io"
 	"net/http"
-	"slices"
-	"strings"
 	"time"
 )
-
-func (s serverGateway) getResource(r *http.Request) *config.Resource {
-	for _, v := range s.config.Resources {
-		if strings.HasPrefix(r.URL.Path, v.Prefix) {
-			return &v
-		}
-	}
-	return nil
-}
 
 func forward(r *http.Request, host string, timeout int) (*http.Response, error) {
 	ctx, cancel := context.WithTimeout(r.Context(), time.Duration(timeout)*time.Second)
@@ -33,56 +21,32 @@ func forward(r *http.Request, host string, timeout int) (*http.Response, error) 
 	return resp, nil
 }
 
-func (s serverGateway) proxy() http.Handler {
-	factoryMap := make(map[string]IResourceFactory)
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		resource := s.getResource(r)
-		if resource == nil {
-			http.Error(w, "Not Found", http.StatusNotFound)
-			return
-		}
+func (s serverGateway) loadBalancerHandler(w http.ResponseWriter, r *http.Request) {
+	resource := getResource(r)
+	pool, ok := s.lb.poolMap[resource.Prefix]
+	if !ok {
+		s.notFound(w, r)
+		return
+	}
+	srv := pool.Next()
+	srv.Add(1)
+	defer srv.Add(-1)
+	resp, err := forward(r, srv.address, resource.Timeout)
 
-		if !slices.Contains(resource.Methods, r.Method) {
-			http.Error(w, "Method Not Allowed", http.StatusMethodNotAllowed)
-			return
-		}
+	if err != nil {
+		s.internalServerError(w, r, err)
+		return
+	}
 
-		var factory IResourceFactory
-		var err error
+	defer resp.Body.Close()
+	for k, v := range resp.Header {
+		w.Header()[k] = v
+	}
 
-		if v, ok := factoryMap[resource.Prefix]; !ok {
-			factory, err = GetResourceFactory(resource)
-			if err != nil {
-				http.Error(w, err.Error(), http.StatusInternalServerError)
-				return
-			}
-			factoryMap[resource.Prefix] = factory
-		} else {
-			factory = v
-		}
-
-		host := factory.Next()
-		resp, err := forward(r, host, resource.Timeout)
-
-		if err != nil {
-			http.Error(w, err.Error(), http.StatusInternalServerError)
-			return
-		}
-
-		defer resp.Body.Close()
-
-		for k, v := range resp.Header {
-			w.Header()[k] = v
-		}
-
-		w.WriteHeader(resp.StatusCode)
-
-		// Copy the response body to the client
-		_, err = io.Copy(w, resp.Body)
-
-		if err != nil {
-			http.Error(w, err.Error(), http.StatusInternalServerError)
-			return
-		}
-	})
+	w.WriteHeader(resp.StatusCode)
+	_, err = io.Copy(w, resp.Body)
+	if err != nil {
+		s.internalServerError(w, r, err)
+		return
+	}
 }

@@ -70,12 +70,12 @@ func (l *Logger) Warn(message string, properties map[string]string) {
 	l.print(LevelWarn, message, properties)
 }
 
-func (l *Logger) Error(message string, properties map[string]string) {
-	l.print(LevelError, message, properties)
+func (l *Logger) Error(err error, properties map[string]string) {
+	l.print(LevelError, err.Error(), properties)
 }
 
-func (l *Logger) Fatal(message string, properties map[string]string) {
-	l.print(LevelFatal, message, properties)
+func (l *Logger) Fatal(err error, properties map[string]string) {
+	l.print(LevelFatal, err.Error(), properties)
 	os.Exit(1)
 }
 
