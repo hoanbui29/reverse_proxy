@@ -2,6 +2,7 @@ package main
 
 import (
 	"encoding/json"
+	"net"
 	"net/http"
 )
 
@@ -24,4 +25,14 @@ func (s *serverGateway) writeJSON(w http.ResponseWriter, status int, data any, h
 	w.WriteHeader(status)
 	w.Write(js)
 	return nil
+}
+
+func getClientIP(r *http.Request) (string, error) {
+	clientAddress := r.Header.Get("X-Forwarded-For")
+	if clientAddress == "" {
+		clientAddress = r.RemoteAddr
+	}
+
+	ip, _, err := net.SplitHostPort(clientAddress)
+	return ip, err
 }

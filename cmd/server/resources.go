@@ -14,6 +14,11 @@ type roundRobinPool struct {
 	mu      *sync.Mutex
 }
 
+type leastConnectionsPool struct {
+	servers []*server
+	mu      *sync.Mutex
+}
+
 func getServerPool(r *config.Resource) (serverPool, error) {
 	switch r.Strategy {
 	case config.StrategyRoundRobin:

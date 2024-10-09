@@ -16,9 +16,15 @@ type Config struct {
 	Resources []Resource   `mapstructure:"resources"`
 }
 
+type RateLimit struct {
+	Burst         int `mapstructure:"burst"`
+	RatePerSecond int `mapstructure:"rate_per_second"`
+}
+
 type ConfigServer struct {
-	Host string `mapstructure:"host"`
-	Port int    `mapstructure:"port"`
+	Host      string    `mapstructure:"host"`
+	Port      int       `mapstructure:"port"`
+	RateLimit RateLimit `mapstructure:"rate_limit"`
 }
 
 type Resource struct {

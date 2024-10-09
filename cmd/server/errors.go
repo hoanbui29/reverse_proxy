@@ -44,3 +44,7 @@ func (s *serverGateway) notFound(w http.ResponseWriter, r *http.Request) {
 func (s *serverGateway) methodNotAllowed(w http.ResponseWriter, r *http.Request) {
 	s.errorResponse(w, r, http.StatusMethodNotAllowed, "method not allowed")
 }
+
+func (s *serverGateway) rateLimitExceeded(w http.ResponseWriter, r *http.Request) {
+	s.errorResponse(w, r, http.StatusTooManyRequests, "rate limit exceeded")
+}

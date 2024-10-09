@@ -13,5 +13,5 @@ func main() {
 	}
 	s.loadConfig()
 	s.loadLBConfig()
-	http.ListenAndServe(fmt.Sprintf("%s:%d", s.config.Server.Host, s.config.Server.Port), s.getResourceMiddleware(s.checkAllowedMethods(http.HandlerFunc(s.loadBalancerHandler))))
+	http.ListenAndServe(fmt.Sprintf("%s:%d", s.config.Server.Host, s.config.Server.Port), s.rateLimiter(s.getResourceMiddleware(s.checkAllowedMethods(http.HandlerFunc(s.loadBalancerHandler)))))
 }
