@@ -28,10 +28,16 @@ type serverGateway struct {
 	lb     *loadBalancer
 }
 
-func (s server) Add(amount int) {
+func (s *server) Add(amount int) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 	s.liveConnections += amount
+}
+
+func (s *server) CountLiveCons() int {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	return s.liveConnections
 }
 
 func (s *serverGateway) loadConfig() {

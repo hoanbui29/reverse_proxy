@@ -8,6 +8,7 @@ type Strategy int
 
 const (
 	StrategyRoundRobin Strategy = iota
+	StrategyLeastConnections
 )
 
 type Config struct {
